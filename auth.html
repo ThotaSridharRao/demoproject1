@@ -393,6 +393,8 @@
             const email = signInEmailInput.value.trim();
             const password = signInPasswordInput.value.trim();
 
+            console.log("Attempting login with:", { email, password });
+
             if (!email || !password) {
                 showMessage('Please enter both email and password.', 'error');
                 return;
