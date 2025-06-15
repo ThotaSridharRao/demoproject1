@@ -219,8 +219,23 @@
             opacity: 1;
         }
     </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ff4b2b', // A red-orange similar to the gradient
+                        secondary: '#ff416c', // A pink-red for emphasis
+                    },
+                },
+            },
+        };
+    </script>
 </head>
-<body>    
+<body class="flex items-center justify-center min-h-screen bg-gray-100 transition-colors duration-300">
+    <!-- Custom Message Box Container -->
+    <div id="custom-message-box" class="message-box hidden"></div>
+
     <div id="auth-container" class="bg-white rounded-xl shadow-2xl overflow-hidden relative">
         <!-- Sign In Form -->
         <div class="form-container sign-in-container">
@@ -288,6 +303,7 @@
             </div>
         </div>
     </div>
+
     <script>
         tailwind.config = {
             theme: {
@@ -301,7 +317,7 @@
         };
 
         // Define the base URL for your deployed backend
-        const BASE_URL = 'https://demoproject1backend.onrender.com'; // IMPORTANT: Updated to your deployed backend URL
+        const BASE_URL = 'https://demoproject1backend.onrender.com'; // IMPORTANT: Replace with your actual backend URL when deployed (e.g., https://your-app-name.onrender.com)
 
         // Helper function to display custom messages (success/error)
         function showMessage(message, type = 'success') {
