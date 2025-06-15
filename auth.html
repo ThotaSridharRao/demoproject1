@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login/Sign Up</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Custom Glassmorphism Effect */
+        .glassmorphism {
+            background-color: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); /* For Safari */
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Base styles for forms and overlay within the main container (DESKTOP FIRST) */
+        #auth-container {
+            position: relative;
+            width: 768px; /* Total width for desktop */
+            max-width: 100%;
+            min-height: 480px; /* Total height for desktop */
+            transition: box-shadow 0.3s ease; /* Keep shadow transition */
+        }
+
+        /* Forms (sign-in and sign-up) */
+        .form-container {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            transition: all 0.6s ease-in-out; /* Apply transition to all relevant properties */
+            background-color: #ffffff; /* Default background */
+            padding: 40px; /* Default padding for desktop forms */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sign-in-container {
+            left: 0;
+            width: 50%; /* Takes half of the desktop width */
+            z-index: 2; /* Sign-in is visible by default */
+        }
+
+        .sign-up-container {
+            left: 0;
+            width: 50%; /* Takes half of the desktop width */
+            opacity: 0; /* Initially hidden */
+            z-index: 1; /* Initially behind sign-in */
+            transform: translateX(100%); /* Initially pushed out of view to the right */
+        }
+
+        /* Overlay (Desktop-specific) */
+        .overlay-container {
+            position: absolute;
+            top: 0;
+            left: 50%; /* Initially covers the right half */
+            width: 50%;
+            height: 100%;
+            overflow: hidden;
+            transition: transform 0.6s ease-in-out;
+            z-index: 100; /* Higher z-index to be on top */
+        }
+
+        .overlay {
+            background: linear-gradient(to right, #ff4b2b, #ff416c); /* Red-ish gradient */
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: 0 0;
+            color: #ffffff;
+            position: relative;
+            left: -100%; /* Pushes the gradient outside, so only the right half (when left:0) is shown */
+            height: 100%;
+            width: 200%; /* Spans two halves */
+            transform: translateX(0); /* Default position */
+            transition: transform 0.6s ease-in-out;
+        }
+
+        .overlay-panel {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 40px; /* Default padding for desktop overlay panels */
+            text-align: center;
+            top: 0;
+            height: 100%;
+            width: 50%; /* Each panel takes half of the 200% width overlay */
+            transition: transform 0.6s ease-in-out;
+        }
+
+        .overlay-left {
+            transform: translateX(-20%); /* Initially slightly shifted left */
+        }
+
+        .overlay-right {
+            right: 0;
+            transform: translateX(0); /* Initially in its correct position */
+        }
+
+        /* States when #auth-container has the 'right-panel-active' class (DESKTOP) */
+        #auth-container.right-panel-active .sign-in-container {
+            transform: translateX(100%); /* Sign-in form slides right out of view */
+        }
+
+        #auth-container.right-panel-active .sign-up-container {
+            transform: translateX(0); /* Sign-up form slides left into view */
+            opacity: 1;
+            z-index: 5; /* Ensure sign-up is on top when active */
+        }
+
+        #auth-container.right-panel-active .overlay-container {
+            transform: translateX(-100%); /* Overlay container slides left */
+        }
+
+        #auth-container.right-panel-active .overlay {
+            transform: translateX(50%); /* Gradient inside overlay slides right to reveal other side */
+        }
+
+        #auth-container.right-panel-active .overlay-left {
+            transform: translateX(0); /* Overlay left panel comes into view */
+        }
+
+        #auth-container.right-panel-active .overlay-right {
+            transform: translateX(20%); /* Overlay right panel slides right and out */
+        }
+
+        /* RESPONSIVE STYLES FOR MOBILE (MAX-WIDTH: 768PX) */
+        @media (max-width: 768px) {
+            #auth-container {
+                width: 90%; /* Take more width on smaller screens */
+                min-height: 90vh; /* Ensure it takes most of the viewport height */
+            }
+
+            /* Adjust padding for forms and panels on mobile */
+            .form-container, .overlay-panel {
+                padding: 24px; /* Reduced padding from 40px */
+            }
+
+            /* Adjust button padding for mobile */
+            .form-container button, .overlay-panel button {
+                padding: 12px 32px; /* Reduced from py-3 px-12 (12px 48px) */
+            }
+
+            /* MOBILE-SPECIFIC FORM BEHAVIOR */
+            .form-container {
+                width: 100%; /* Forms take full width */
+                height: 100%; /* Forms take full height of auth-container */
+                position: absolute;
+                top: 0;
+                left: 0;
+                /* By default, sign-in is visible, sign-up is hidden */
+                opacity: 0; /* Base state: hidden, will be overridden */
+                z-index: 1;
+                pointer-events: none; /* Prevents interaction when hidden */
+                transform: none !important; /* Crucial: reset desktop transforms */
+            }
+
+            .sign-in-container {
+                opacity: 1; /* Make sign-in visible by default on mobile */
+                z-index: 2;
+                pointer-events: all;
+            }
+
+            .sign-up-container {
+              
+            }
+
+            /* Hide the entire overlay container on mobile */
+            .overlay-container {
+                display: none;
+            }
+
+            /* MOBILE-SPECIFIC 'right-panel-active' STATES */
+            #auth-container.right-panel-active .sign-in-container {
+                opacity: 0; /* Hide sign-in form */
+                z-index: 1;
+                pointer-events: none;
+            }
+
+            #auth-container.right-panel-active .sign-up-container {
+                opacity: 1; /* Show sign-up form */
+                z-index: 2;
+                pointer-events: all;
+            }
+        }
+
+        /* Custom Message Box Styles (copied from other HTML files for consistency) */
+        .message-box {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4CAF50; /* Green for success */
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            min-width: 250px;
+            text-align: center;
+        }
+        .message-box.error {
+            background-color: #f44336; /* Red for error */
+        }
+        .message-box.show {
+            opacity: 1;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ff4b2b', // A red-orange similar to the gradient
+                        secondary: '#ff416c', // A pink-red for emphasis
+                    },
+                },
+            },
+        };
+    </script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-100 transition-colors duration-300">
+    <!-- Custom Message Box Container -->
+    <div id="custom-message-box" class="message-box hidden"></div>
+
+    <div id="auth-container" class="bg-white rounded-xl shadow-2xl overflow-hidden relative">
+        <!-- Sign In Form -->
+        <div class="form-container sign-in-container">
+            <h1 class="text-3xl font-bold mb-6 text-gray-800">Sign In</h1>
+            <div class="social-container mb-6 flex space-x-3">
+                <a href="#" class="border border-gray-300 rounded-full inline-flex justify-center items-center mx-1 h-10 w-10 text-gray-600 hover:bg-gray-100 transition-colors duration-200">
+                    <img src="https://img.icons8.com/color/24/000000/google-logo.png" alt="Google" class="w-5 h-5">
+                </a>
+                <a href="#" class="border border-gray-300 rounded-full inline-flex justify-center items-center mx-1 h-10 w-10 text-gray-600 hover:bg-gray-100 transition-colors duration-200">
+                    <img src="https://img.icons8.com/ios-filled/24/000000/facebook-new.png" alt="Facebook" class="w-5 h-5">
+                </a>
+                <a href="#" class="border border-gray-300 rounded-full inline-flex justify-center items-center mx-1 h-10 w-10 text-gray-600 hover:bg-gray-100 transition-colors duration-200">
+                    <img src="https://img.icons8.com/ios-filled/24/000000/github.png" alt="GitHub" class="w-5 h-5">
+                </a>
+            </div>
+            <span class="text-gray-600 text-sm mb-4">or use your account</span>
+            <input type="email" id="signInEmail" placeholder="Email" class="bg-gray-100 border-none p-3 my-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200" />
+            <input type="password" id="signInPassword" placeholder="Password" class="bg-gray-100 border-none p-3 my-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200" />
+            <a href="#" class="text-sm text-gray-600 mb-4 hover:text-primary transition-colors duration-200">Forgot your password?</a>
+            <button id="signInButton" class="bg-primary text-white text-sm font-bold py-3 px-12 rounded-full uppercase tracking-wider border border-transparent hover:opacity-90 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200 shadow-md">Sign In</button>
+
+            <!-- Mobile-specific Sign Up toggle -->
+            <p class="md:hidden text-gray-600 text-sm mt-8">New here? <button id="mobileSignUp" class="font-bold text-primary hover:underline focus:outline-none">Sign Up</button></p>
+        </div>
+
+        <!-- Sign Up Form -->
+        <div class="form-container sign-up-container">
+            <h1 class="text-3xl font-bold mb-6 text-gray-800">Create Account</h1>
+            <div class="social-container mb-6 flex space-x-3">
+                <a href="#" class="border border-gray-300 rounded-full inline-flex justify-center items-center mx-1 h-10 w-10 text-gray-600 hover:bg-gray-100 transition-colors duration-200">
+                    <img src="https://img.icons8.com/color/24/000000/google-logo.png" alt="Google" class="w-5 h-5">
+                </a>
+                <a href="#" class="border border-gray-300 rounded-full inline-flex justify-center items-center mx-1 h-10 w-10 text-gray-600 hover:bg-gray-100 transition-colors duration-200">
+                    <img src="https://img.icons8.com/ios-filled/24/000000/facebook-new.png" alt="Facebook" class="w-5 h-5">
+                </a>
+                <a href="#" class="border border-gray-300 rounded-full inline-flex justify-center items-center mx-1 h-10 w-10 text-gray-600 hover:bg-gray-100 transition-colors duration-200">
+                    <img src="https://img.icons8.com/ios-filled/24/000000/github.png" alt="GitHub" class="w-5 h-5">
+                </a>
+            </div>
+            <span class="text-gray-600 text-sm mb-4">or use your email for registration</span>
+            <input type="text" id="signUpName" placeholder="Name" class="bg-gray-100 border-none p-3 my-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200" />
+            <input type="email" id="signUpEmail" placeholder="Email" class="bg-gray-100 border-none p-3 my-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200" />
+            <input type="password" id="signUpPassword" placeholder="Password" class="bg-gray-100 border-none p-3 my-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200" />
+            <button id="signUpButton" class="bg-primary text-white text-sm font-bold py-3 px-12 rounded-full uppercase tracking-wider border border-transparent hover:opacity-90 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200 shadow-md">Sign Up</button>
+
+            <!-- Mobile-specific Sign In toggle -->
+            <p class="md:hidden text-gray-600 text-sm mt-8">Already a user? <button id="mobileSignIn" class="font-bold text-primary hover:underline focus:outline-none">Sign In</button></p>
+        </div>
+
+        <!-- Overlay Panel (Only visible on desktop/tablet due to media query) -->
+        <div class="overlay-container glassmorphism md:block hidden">
+            <div class="overlay">
+                <!-- Overlay Left (Visible when Sign In is active on desktop) -->
+                <div class="overlay-panel overlay-left">
+                    <h1 class="text-3xl font-bold mb-4">Welcome Back!</h1>
+                    <p class="text-sm font-light leading-snug mb-8">To keep connected with us please login with your personal info</p>
+                    <button class="bg-transparent border border-white text-white text-sm font-bold py-3 px-12 rounded-full uppercase tracking-wider hover:bg-white hover:text-primary active:scale-95 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 transition-all duration-200" id="desktopSignIn">Sign In</button>
+                </div>
+                <!-- Overlay Right (Visible when Sign Up is active on desktop) -->
+                <div class="overlay-panel overlay-right">
+                    <h1 class="text-3xl font-bold mb-4">Hello, Friend!</h1>
+                    <p class="text-sm font-light leading-snug mb-8">Enter your personal details and start your journey with us</p>
+                    <button class="bg-transparent border border-white text-white text-sm font-bold py-3 px-12 rounded-full uppercase tracking-wider hover:bg-white hover:text-primary active:scale-95 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 transition-all duration-200" id="desktopSignUp">Sign Up</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ff4b2b', // A red-orange similar to the gradient
+                        secondary: '#ff416c', // A pink-red for emphasis
+                    },
+                },
+            },
+        };
+
+        // Define the base URL for your deployed backend
+        const BASE_URL = 'http://localhost:5000'; // IMPORTANT: Replace with your actual backend URL when deployed (e.g., https://your-app-name.onrender.com)
+
+        // Helper function to display custom messages (success/error)
+        function showMessage(message, type = 'success') {
+            const msgBox = document.getElementById('custom-message-box');
+            msgBox.textContent = message;
+            msgBox.className = `message-box show ${type}`; // Add 'show' and type class
+            setTimeout(() => {
+                msgBox.classList.remove('show');
+                setTimeout(() => msgBox.classList.add('hidden'), 500); // Hide after fade out
+            }, 3000); // Message visible for 3 seconds
+            msgBox.classList.remove('hidden'); // Ensure it's not hidden if re-shown quickly
+        }
+
+
+        // Get references to DOM elements
+        const desktopSignUpButton = document.getElementById('desktopSignUp'); // Desktop Sign Up
+        const desktopSignInButton = document.getElementById('desktopSignIn'); // Desktop Sign In
+        const mobileSignUpButton = document.getElementById('mobileSignUp'); // Mobile Sign Up link
+        const mobileSignInButton = document.getElementById('mobileSignIn'); // Mobile Sign In link
+        const authContainer = document.getElementById('auth-container');
+
+        // Form elements for Sign In
+        const signInEmailInput = document.getElementById('signInEmail');
+        const signInPasswordInput = document.getElementById('signInPassword');
+        const signInSubmitButton = document.getElementById('signInButton');
+
+        // Form elements for Sign Up
+        const signUpNameInput = document.getElementById('signUpName');
+        const signUpEmailInput = document.getElementById('signUpEmail');
+        const signUpPasswordInput = document.getElementById('signUpPassword');
+        const signUpSubmitButton = document.getElementById('signUpButton');
+
+
+        // Function to toggle between Sign In and Sign Up forms
+        function toggleAuthMode(mode) {
+            if (mode === 'signup') {
+                authContainer.classList.add("right-panel-active");
+            } else {
+                authContainer.classList.remove("right-panel-active");
+            }
+        }
+
+        // Handle initial state based on URL parameter (e.g., auth.html?action=signup)
+        const urlParams = new URLSearchParams(window.location.search);
+        const action = urlParams.get('action');
+        if (action) {
+            toggleAuthMode(action);
+        }
+
+        // Event listeners for desktop toggles
+        desktopSignInButton.addEventListener('click', () => {
+            toggleAuthMode('signin');
+        });
+
+        desktopSignUpButton.addEventListener('click', () => {
+            toggleAuthMode('signup');
+        });
+
+        // Event listeners for mobile toggles (these only switch the view, not submit)
+        mobileSignInButton.addEventListener('click', () => {
+            toggleAuthMode('signin');
+        });
+
+        mobileSignUpButton.addEventListener('click', () => {
+            toggleAuthMode('signup');
+        });
+
+
+        // Handle Sign In Form Submission
+        signInSubmitButton.addEventListener('click', async (e) => {
+            e.preventDefault(); // Prevent default form submission
+
+            const email = signInEmailInput.value.trim();
+            const password = signInPasswordInput.value.trim();
+
+            if (!email || !password) {
+                showMessage('Please enter both email and password.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('token', data.token); // Store the JWT token
+                    showMessage(data.msg || 'Login successful! Redirecting to dashboard.', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html'; // Redirect to dashboard
+                    }, 1500);
+                } else {
+                    showMessage(data.msg || 'Login failed. Please check your credentials.', 'error');
+                }
+            } catch (error) {
+                console.error('Error during login:', error);
+                showMessage('Network error. Please try again later.', 'error');
+            }
+        });
+
+        // Handle Sign Up Form Submission
+        signUpSubmitButton.addEventListener('click', async (e) => {
+            e.preventDefault(); // Prevent default form submission
+
+            const name = signUpNameInput.value.trim();
+            const email = signUpEmailInput.value.trim();
+            const password = signUpPasswordInput.value.trim();
+
+            if (!name || !email || !password) {
+                showMessage('Please fill in all fields.', 'error');
+                return;
+            }
+            if (password.length < 6) {
+                showMessage('Password must be at least 6 characters long.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('token', data.token); // Store the JWT token
+                    showMessage(data.msg || 'Registration successful! Redirecting to dashboard.', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html'; // Redirect to dashboard
+                    }, 1500);
+                } else {
+                    showMessage(data.msg || 'Registration failed. User might already exist or invalid data.', 'error');
+                }
+            } catch (error) {
+                console.error('Error during registration:', error);
+                showMessage('Network error. Please try again later.', 'error');
+            }
+        });
+    </script>
+</body>
+</html>

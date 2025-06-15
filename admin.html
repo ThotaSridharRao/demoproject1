@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maosaji Honda - Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>
+tailwind.config = {
+    theme: {
+        extend: {
+            colors: {
+                primary: '#e31837', /* Honda's primary red color */
+                secondary: '#000000' /* Dark grey for text */
+            },
+            borderRadius: {
+                'none': '0px',
+                'sm': '4px',
+                DEFAULT: '8px',
+                'md': '12px',
+                'lg': '16px',
+                'xl': '20px',
+                '2xl': '24px',
+                '3xl': '32px',
+                'full': '9999px',
+                'button': '8px' /* Custom border-radius for buttons */
+            }
+        }
+    }
+};
+</script>
+<style>
+/* Reset Remixicon content to allow individual icon display */
+:where([class^="ri-"])::before { content: initial; } /* Remove default content to allow specific icon classes to work */
+
+body {
+    font-family: 'Poppins', sans-serif;
+    scroll-behavior: smooth;
+}
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e1f5fe 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.5s ease-out;
+}
+.loader {
+    position: relative;
+    width: 120px;
+    height: 120px;
+}
+.loader-circle {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 4px solid transparent;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+.loader-circle:nth-child(2) {
+    width: 80%;
+    height: 80%;
+    top: 10%;
+    left: 10%;
+    border-top-color: #10b981;
+    animation-duration: 1.3s;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.logo-pulse {
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+.fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.fade-in.appear {
+    opacity: 1;
+    transform: translateY(0);
+}
+.service-vehicle-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.service-vehicle-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+/* Status colors for services */
+.status-pending { background-color: #fef3c7; color: #d97706; } /* yellow-100, yellow-700 */
+.status-in-progress { background-color: #bfdbfe; color: #1d4ed8; } /* blue-200, blue-800 */
+.status-completed { background-color: #d1fae5; color: #065f46; } /* green-100, green-800 */
+.status-ready-for-pickup { background-color: #bae6fd; color: #0369a1; } /* lightblue-100, lightblue-800 */
+.status-cancelled { background-color: #fee2e2; color: #b91c1c; } /* red-100, red-700 */
+.status-picked-up { background-color: #e0f2f7; color: #00838f; } /* teal-100, teal-700, custom for picked-up */
+
+
+/* Styles for custom form elements (if needed, though not directly used in this version) */
+.custom-checkbox {
+    position: relative;
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background-color: #fff;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.custom-checkbox.checked {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+}
+.custom-checkbox.checked::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 6px;
+    width: 6px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+.custom-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
+    cursor: pointer;
+}
+.switch-track {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #e5e7eb;
+    border-radius: 24px;
+    transition: background-color 0.3s ease;
+}
+.switch-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.switch-active .switch-track {
+    background-color: #3b82f6;
+}
+.switch-active .switch-thumb {
+    transform: translateX(24px);
+}
+
+/* Custom Message Box Styles */
+.message-box {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #4CAF50; /* Green for success */
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    min-width: 250px;
+    text-align: center;
+}
+.message-box.error {
+    background-color: #f44336; /* Red for error */
+}
+.message-box.show {
+    opacity: 1;
+}
+
+/* Confirmation Modal Styles */
+.confirmation-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10001;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+.confirmation-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+.confirmation-modal-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    transform: translateY(20px);
+    transition: transform 0.3s ease-in-out;
+}
+.confirmation-modal.show .confirmation-modal-content {
+    transform: translateY(0);
+}
+
+/* Modal for editing service details */
+.edit-service-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10002;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+.edit-service-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+.edit-service-modal-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    max-width: 700px;
+    width: 95%;
+    max-height: 90%;
+    overflow-y: auto; /* Enable scrolling for content if it overflows */
+    transform: translateY(20px);
+    transition: transform 0.3s ease-in-out;
+}
+.edit-service-modal.show .edit-service-modal-content {
+    transform: translateY(0);
+}
+.part-entry {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 0.5fr; /* Name, Qty, Cost, Remove */
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+.part-entry input {
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+}
+.part-entry .remove-part-btn {
+    background-color: #ef4444; /* red-500 */
+    color: white;
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.part-entry .remove-part-btn:hover {
+    background-color: #dc2626; /* red-600 */
+}
+
+</style>
+</head>
+<body>
+<!-- Loading Screen -->
+<div class="loading-screen" id="loading-screen">
+    <div class="flex flex-col items-center">
+        <div class="logo-pulse text-4xl font-['Pacifico'] text-primary mb-4">Maosaji Honda</div>
+        <div class="loader">
+            <div class="loader-circle"></div>
+            <div class="loader-circle"></div>
+        </div>
+        <p class="mt-4 text-gray-600">Loading admin dashboard...</p>
+    </div>
+</div>
+
+<!-- Custom Message Box Container -->
+<div id="custom-message-box" class="message-box hidden"></div>
+
+<!-- Confirmation Modal -->
+<div id="confirmation-modal" class="confirmation-modal">
+    <div class="confirmation-modal-content">
+        <h3 class="text-xl font-semibold mb-4 text-gray-800" id="confirmation-modal-title">Confirm Action</h3>
+        <p class="text-gray-600 mb-6" id="confirmation-modal-message">Are you sure you want to proceed?</p>
+        <div class="flex justify-center space-x-4">
+            <button id="confirm-yes" class="px-6 py-3 bg-red-500 text-white rounded-button font-medium hover:bg-red-600 transition-colors">Yes</button>
+            <button id="confirm-no" class="px-6 py-3 bg-gray-300 text-gray-800 rounded-button font-medium hover:bg-gray-400 transition-colors">No</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Service Details Modal -->
+<div id="edit-service-modal" class="edit-service-modal">
+    <div class="edit-service-modal-content">
+        <h3 class="text-2xl font-bold mb-6 text-gray-800">Edit Service Details</h3>
+        <form id="edit-service-form">
+            <input type="hidden" id="edit-service-id">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label for="edit-service-date" class="block text-gray-700 mb-2">Service Date</label>
+                    <input type="date" id="edit-service-date" class="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+                <div>
+                    <label for="edit-service-type" class="block text-gray-700 mb-2">Service Type / Current Status</label>
+                    <div class="relative">
+                        <select id="edit-service-type" class="w-full px-4 py-3 border border-gray-300 rounded appearance-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent pr-8">
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Ready for Pickup">Ready for Pickup</option>
+                            <option value="Picked Up">Picked Up</option>
+                            <option value="Cancelled">Cancelled</option>
+                            <option value="Oil Change">Oil Change</option>
+                            <option value="Tire Rotation">Tire Rotation</option>
+                            <option value="Brake Inspection">Brake Inspection</option>
+                            <option value="Engine Diagnostic">Engine Diagnostic</option>
+                            <option value="Fluid Check">Fluid Check</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                            <i class="ri-arrow-down-s-line text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Added Customer Name and Phone to Edit Modal -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label for="edit-customer-name" class="block text-gray-700 mb-2">Customer Name</label>
+                    <input type="text" id="edit-customer-name" class="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" required>
+                </div>
+                <div>
+                    <label for="edit-customer-phone" class="block text-gray-700 mb-2">Customer Phone</label>
+                    <input type="tel" id="edit-customer-phone" class="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" required>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label for="edit-service-description" class="block text-gray-700 mb-2">Description</label>
+                <textarea id="edit-service-description" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label for="edit-service-cost" class="block text-gray-700 mb-2">Estimated Cost (₹)</label>
+                    <input type="number" id="edit-service-cost" class="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" step="0.01">
+                </div>
+                <div>
+                    <label for="edit-total-bill" class="block text-gray-700 mb-2">Total Bill (₹)</label>
+                    <input type="number" id="edit-total-bill" class="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" step="0.01">
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-lg font-semibold mb-3 text-gray-800">Parts Used</h4>
+                <div id="parts-container">
+                    <!-- Parts will be dynamically added here -->
+                </div>
+                <button type="button" id="add-part-btn" class="px-4 py-2 bg-blue-500 text-white rounded-button text-sm hover:bg-blue-600 transition-colors flex items-center mt-2">
+                    <i class="ri-add-line mr-2"></i> Add Part
+                </button>
+            </div>
+
+            <div class="flex justify-end space-x-4">
+                <button type="button" id="cancel-edit-btn" class="px-6 py-3 bg-gray-300 text-gray-800 rounded-button font-medium hover:bg-gray-400 transition-colors">Cancel</button>
+                <button type="submit" class="px-6 py-3 bg-primary text-white rounded-button font-medium hover:bg-opacity-90 transition-all">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- Navigation (Header) -->
+<nav class="bg-white shadow-md fixed w-full z-50 transition-all duration-300" id="navbar">
+    <div class="container mx-auto px-4 py-3">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <img src="https://static.readdy.ai/image/37ac7cf2068439d6c30c12e5ad957f85/cf039908287dcf84123e6dde02bea2bc.png" alt="Honda Logo" class="h-8">
+                <a href="#" class="text-2xl font-bold text-primary">Maosaji Honda</a>
+            </div>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#vehicles-for-servicing" class="text-gray-700 hover:text-primary transition-colors duration-300">Manage Services</a>
+                <!-- Removed Add Service Entry link -->
+                <a href="#recent-activity" class="text-gray-700 hover:text-primary transition-colors duration-300">Recent Activity</a>
+                <button id="logout-button" class="px-4 py-2 text-primary border border-primary hover:bg-primary hover:text-white transition-colors duration-300 !rounded-button whitespace-nowrap">Log Out</button>
+            </div>
+            <div class="md:hidden flex items-center">
+                <button id="mobile-menu-button" class="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-primary">
+                    <i class="ri-menu-line ri-lg"></i>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="md:hidden hidden mt-4 pb-2">
+            <div class="flex flex-col space-y-3">
+                <a href="#vehicles-for-servicing" class="text-gray-700 hover:text-primary py-2 transition-colors duration-300">Manage Services</a>
+                <!-- Removed Add Service Entry link from mobile menu -->
+                <a href="#recent-activity" class="text-gray-700 hover:text-primary py-2 transition-colors duration-300">Recent Activity</a>
+                <button id="logout-button-mobile" class="px-4 py-2 text-primary border border-primary hover:bg-primary hover:text-white transition-colors duration-300 !rounded-button whitespace-nowrap">Log Out</button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Admin Dashboard Main Content -->
+<main class="pt-24 pb-12 bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4">
+        <!-- Welcome Section -->
+        <section class="mb-12 fade-in">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">Welcome, Admin!</h1>
+            <p class="text-lg text-gray-600">Manage service requests and update vehicle statuses.</p>
+        </section>
+
+        <!-- Vehicles for Servicing Section -->
+        <section id="vehicles-for-servicing" class="py-12 bg-white rounded-lg shadow-md mb-12 fade-in">
+            <div class="px-8 py-6 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-gray-800">Vehicles Currently in Service</h2>
+                <!-- Removed Add New Entry button -->
+            </div>
+            <div id="service-vehicles-list" class="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Service cards will be dynamically loaded here -->
+            </div>
+            <!-- Message for no vehicles in service -->
+            <div id="no-service-vehicles-message" class="p-8 text-center text-gray-500 hidden">
+                <i class="ri-check-double-line text-6xl mb-4"></i>
+                <p class="text-xl font-medium mb-4">No vehicles currently in service!</p>
+                <p>New service entries are typically added by users booking a service.</p>
+            </div>
+        </section>
+
+        <!-- Recent Activity Section -->
+        <section id="recent-activity" class="py-12 bg-white rounded-lg shadow-md mt-12 fade-in">
+            <div class="px-8 py-6 border-b border-gray-200">
+                <h2 class="text-2xl font-bold text-gray-800">Recent Service Activity</h2>
+            </div>
+            <div id="recent-activity-list" class="p-8 space-y-4">
+                <!-- Recent activity items will be dynamically loaded here -->
+            </div>
+            <div id="no-recent-activity-message" class="p-8 text-center text-gray-500 hidden">
+                <i class="ri-history-line text-6xl mb-4"></i>
+                <p class="text-xl font-medium mb-4">No recent service activity!</p>
+                <p>New service entries or status updates will appear here.</p>
+            </div>
+        </section>
+    </div>
+</main>
+
+<!-- Map Section (Copied from index.html) -->
+<section class="h-96 relative overflow-hidden">
+    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://public.readdy.ai/gen_page/map_placeholder_1280x720.png');"></div>
+    <div class="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full text-center">
+            <h3 class="text-2xl font-semibold mb-4">Visit Our Location</h3>
+            <p class="text-gray-600 mb-6">We're conveniently located in the heart of Automotive City with easy access and ample parking.</p>
+            <button class="px-6 py-3 bg-primary text-white hover:bg-blue-600 transition-colors duration-300 !rounded-button whitespace-nowrap">
+                <i class="ri-navigation-line mr-2"></i> Get Directions
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- Footer (Copied from index.html) -->
+<footer class="bg-gray-800 text-white pt-16 pb-8">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+            <!-- Company Info -->
+            <div>
+                <div class="flex items-center gap-2 mb-6">
+                    <img src="https://static.readdy.ai/image/37ac7cf2068439d6c30c12e5ad957f85/cf039908287dcf84123e6dde02bea2bc.png" alt="Honda Logo" class="h-8">
+                    <h3 class="text-xl font-bold text-primary">Maosaji Honda</h3>
+                </div>
+                <p class="text-gray-400 mb-6">Authorized Honda motorcycle service center providing professional maintenance to keep your bike performing at its best.</p>
+                <div class="flex space-x-4">
+                    <a href="#" class="w-10 h-10 rounded-full bg-gray-700 hover:bg-primary transition-colors duration-300 flex items-center justify-center">
+                        <i class="ri-facebook-fill"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-gray-700 hover:bg-primary transition-colors duration-300 flex items-center justify-center">
+                        <i class="ri-twitter-fill"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-gray-700 hover:bg-primary transition-colors duration-300 flex items-center justify- center">
+                        <i class="ri-instagram-line"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 rounded-full bg-gray-700 hover:bg-primary transition-colors duration-300 flex items-center justify-center">
+                        <i class="ri-youtube-fill"></i>
+                    </a>
+                </div>
+            </div>
+            <!-- Quick Links -->
+            <div>
+                <h4 class="text-lg font-semibold mb-6">Quick Links</h4>
+                <ul class="space-y-3">
+                    <li><a href="#vehicles-for-servicing" class="text-gray-400 hover:text-white transition-colors duration-300">Manage Services</a></li>
+                    <!-- Removed Add Service Entry link -->
+                    <li><a href="#recent-activity" class="text-gray-400 hover:text-white transition-colors duration-300">Recent Activity</a></li>
+                </ul>
+            </div>
+            <!-- Services (Can link to specific dashboard sections or external service pages) -->
+            <div>
+                <h4 class="text-lg font-semibold mb-6">Our Services</h4>
+                <ul class="space-y-3">
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors duration-300">Oil Change</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors duration-300">Brake Service</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors duration-300">Diagnostics</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors duration-300">Battery Service</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors duration-300">Engine Repair</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors duration-300">A/C Service</a></li>
+                </ul>
+            </div>
+            <!-- Newsletter -->
+            <div>
+                <h4 class="text-lg font-semibold mb-6">Newsletter</h4>
+                <p class="text-gray-400 mb-6">Subscribe to our newsletter for the latest service offers and automotive tips.</p>
+                <form class="mb-4">
+                    <div class="flex">
+                        <input type="email" placeholder="Your email address" class="px-4 py-3 bg-gray-700 text-white border-none rounded-l focus:outline-none focus:ring-2 focus:ring-primary flex-grow">
+                        <button type="submit" class="px-4 py-3 bg-primary text-white rounded-r hover:bg-blue-600 transition-colors duration-300">
+                            <i class="ri-send-plane-fill"></i>
+                        </button>
+                    </div>
+                </form>
+                <div class="flex items-center">
+                    <div class="custom-switch" id="newsletter-switch">
+                        <div class="switch-track"></div>
+                        <div class="switch-thumb"></div>
+                    </div>
+                    <span class="ml-2 text-gray-400">Receive promotional emails</span>
+                </div>
+            </div>
+        </div>
+        <div class="pt-8 border-t border-gray-700 flex flex-col md:flex-row justify-between items-center">
+            <p class="text-gray-400 text-center md:text-left mb-4 md:mb-0">© 2025 AutoCare Pro. All rights reserved.</p>
+            <div class="flex space-x-6">
+                <a href="#" class="text-gray-400 hover:text-white transition-colors duration-300">Privacy Policy</a>
+                <a href="#" class="text-gray-400 hover:text-white transition-colors duration-300">Terms of Service</a>
+                <a href="#" class="text-gray-400 hover:text-white transition-colors duration-300">Cookie Policy</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Mobile Menu Script -->
+<script id="mobile-menu-script">
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuButton.addEventListener('click', function() {
+        mobileMenu.classList.toggle('hidden');
+    });
+    // Close mobile menu when clicking on a link
+    const mobileLinks = mobileMenu.querySelectorAll('a');
+    mobileLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            mobileMenu.classList.add('hidden');
+        });
+    });
+});
+</script>
+
+<!-- Loading Screen Script -->
+<script id="loading-screen-script">
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        const loadingScreen = document.getElementById('loading-screen');
+        loadingScreen.style.opacity = '0';
+        setTimeout(function() {
+            loadingScreen.style.display = 'none';
+        }, 500);
+    }, 2000); // Display loading screen for 2 seconds
+});
+</script>
+
+<!-- Scroll Animation Script -->
+<script id="scroll-animation-script">
+document.addEventListener('DOMContentLoaded', function() {
+    const fadeElements = document.querySelectorAll('.fade-in');
+    function checkFade() {
+        fadeElements.forEach(element => {
+            const elementTop = element.getBoundingClientRect().top;
+            const elementBottom = element.getBoundingClientRect().bottom;
+            const isVisible = (elementTop < window.innerHeight - 100) && (elementBottom > 0);
+            if (isVisible) {
+                element.classList.add('appear');
+            }
+        });
+    }
+    // Initial check
+    checkFade();
+    // Check on scroll
+    window.addEventListener('scroll', checkFade);
+});
+</script>
+
+<!-- Admin Dashboard Specific Scripts -->
+<script id="admin-dashboard-script">
+    // Define the base URL for your deployed backend
+    const BASE_URL = 'http://localhost:5000'; // IMPORTANT: Replace with your actual backend URL when deployed (e.g., https://your-app-name.onrender.com)
+
+    // Helper function to display custom messages (success/error)
+    function showMessage(message, type = 'success') {
+        const msgBox = document.getElementById('custom-message-box');
+        msgBox.textContent = message;
+        msgBox.className = `message-box show ${type}`; // Add 'show' and type class
+        setTimeout(() => {
+            msgBox.classList.remove('show');
+            setTimeout(() => msgBox.classList.add('hidden'), 500); // Hide after fade out
+        }, 3000); // Message visible for 3 seconds
+        msgBox.classList.remove('hidden'); // Ensure it's not hidden if re-shown quickly
+    }
+
+    // Function to get JWT token from local storage
+    function getToken() {
+        return localStorage.getItem('token');
+    }
+
+    // Function to decode JWT token and get user info (basic, for client-side display)
+    function decodeToken(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (error) {
+            console.error("Error decoding token:", error);
+            return null;
+        }
+    }
+
+    // Function to check authentication and redirect if not authenticated or not admin
+    async function checkAdminAuthAndRedirect() {
+        const token = getToken();
+        if (!token) {
+            showMessage('You are not logged in. Redirecting to login page.', 'error');
+            setTimeout(() => {
+                window.location.href = 'auth.html';
+            }, 1500);
+            return false;
+        }
+
+        const decoded = decodeToken(token);
+        if (!decoded || !decoded.user || !decoded.user.isAdmin) {
+            showMessage('You do not have admin access. Redirecting to login page.', 'error');
+            setTimeout(() => {
+                window.location.href = 'auth.html';
+            }, 1500);
+            return false;
+        }
+        return true;
+    }
+
+    // Function to update the visibility of the "no service vehicles" message
+    const updateNoServiceVehiclesMessage = () => {
+        const serviceVehiclesList = document.getElementById('service-vehicles-list');
+        const noServiceVehiclesMessage = document.getElementById('no-service-vehicles-message');
+        if (serviceVehiclesList.children.length === 0) {
+            noServiceVehiclesMessage.classList.remove('hidden');
+        } else {
+            noServiceVehiclesMessage.classList.add('hidden');
+        }
+    };
+
+    // Function to update the visibility of the "no recent activity" message
+    const updateNoRecentActivityMessage = () => {
+        const recentActivityList = document.getElementById('recent-activity-list');
+        const noRecentActivityMessage = document.getElementById('no-recent-activity-message');
+        if (recentActivityList.children.length === 0) {
+            noRecentActivityMessage.classList.remove('hidden');
+        } else {
+            noRecentActivityMessage.classList.add('hidden');
+        }
+    };
+
+
+    // Function to render a single service vehicle card for the admin dashboard (Current Services)
+    function renderCurrentServiceCard(service) {
+        // Ensure vehicleId is populated. If not, fallback to 'N/A'.
+        const make = service.vehicleId ? service.vehicleId.make : 'N/A';
+        const model = service.vehicleId ? service.vehicleId.model : 'N/A';
+        const licensePlate = service.vehicleId ? service.vehicleId.licensePlate : 'N/A';
+        // Customer name and phone come directly from the service object if populated, otherwise N/A
+        const customerName = service.customerName || 'N/A';
+        const customerPhone = service.customerPhone || 'N/A';
+
+        const currentStatus = service.type.toLowerCase().replace(/\s/g, '-');
+        const serviceStatusClass = `status-${currentStatus}`;
+
+        const serviceCardHtml = `
+            <div class="service-vehicle-card bg-gray-50 p-6 rounded-lg shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                            <i class="ri-motorcycle-line ri-xl text-primary"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800">${make} ${model}</h3>
+                    </div>
+                    <ul class="text-gray-600 space-y-2 text-sm mb-4">
+                        <li><span class="font-medium">License Plate:</span> ${licensePlate}</li>
+                        <li><span class="font-medium">Customer:</span> ${customerName}</li>
+                        <li><span class="font-medium">Phone:</span> <a href="tel:${customerPhone}" class="text-blue-600 hover:underline">${customerPhone}</a></li>
+                        <li><span class="font-medium">Service ID:</span> ${service._id}</li>
+                        <li><span class="font-medium">Description:</span> ${service.description || 'N/A'}</li>
+                        <li><span class="font-medium">Est. Cost:</span> ₹${service.cost ? service.cost.toFixed(2) : '0.00'}</li>
+                        <li><span class="font-medium">Total Bill:</span> ₹${service.totalBill ? service.totalBill.toFixed(2) : '0.00'}</li>
+                    </ul>
+                    <div class="mb-4">
+                        <span class="text-sm font-medium">Status:</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase ${serviceStatusClass}" data-current-status="${currentStatus}">
+                            ${service.type.replace(/-/g, ' ')}
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-2 mt-4">
+                        <label for="status-${service._id}" class="text-sm text-gray-600 whitespace-nowrap">Update Status:</label>
+                        <select id="status-${service._id}" class="status-selector flex-grow px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary">
+                            <option value="Pending" ${currentStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                            <option value="In Progress" ${currentStatus === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="Completed" ${currentStatus === 'completed' ? 'selected' : ''}>Completed</option>
+                            <option value="Ready for Pickup" ${currentStatus === 'ready-for-pickup' ? 'selected' : ''}>Ready for Pickup</option>
+                            <option value="Cancelled" ${currentStatus === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                            <option value="Picked Up" ${currentStatus === 'picked-up' ? 'selected' : ''}>Picked Up</option>
+                        </select>
+                        <button data-service-id="${service._id}" class="update-status-btn px-3 py-2 bg-primary text-white rounded-button text-sm hover:bg-opacity-90 transition-colors whitespace-nowrap">
+                            Update
+                        </button>
+                    </div>
+                    <button data-service-id="${service._id}" class="edit-service-details-btn mt-4 w-full px-4 py-2 bg-blue-500 text-white rounded-button text-sm hover:bg-blue-600 transition-colors flex items-center justify-center">
+                        <i class="ri-edit-line mr-2"></i> Edit Details
+                    </button>
+                    <button data-service-id="${service._id}" class="delete-service-btn mt-2 w-full px-4 py-2 bg-red-500 text-white rounded-button text-sm hover:bg-red-600 transition-colors flex items-center justify-center">
+                        <i class="ri-delete-bin-line mr-2"></i> Delete Service
+                    </button>
+                </div>
+            </div>
+        `;
+        return serviceCardHtml;
+    }
+
+    // Function to render a single recent activity item
+    function renderRecentActivityItem(service) {
+        const serviceDate = new Date(service.date).toLocaleDateString();
+        const make = service.vehicleId ? service.vehicleId.make : 'N/A';
+        const model = service.vehicleId ? service.vehicleId.model : 'N/A';
+        const licensePlate = service.vehicleId ? service.vehicleId.licensePlate : 'N/A';
+        const customerName = service.customerName || 'N/A';
+        const customerPhone = service.customerPhone || 'N/A';
+        const serviceType = service.type;
+        const serviceStatusClass = `status-${service.type.toLowerCase().replace(/\s/g, '-')}`;
+        const totalBill = service.totalBill ? `₹${service.totalBill.toFixed(2)}` : 'N/A';
+
+        let partsListHtml = '';
+        if (service.partsUsed && service.partsUsed.length > 0) {
+            partsListHtml = `
+                <p class="text-sm text-gray-700 font-medium mt-2">Parts Used:</p>
+                <ul class="list-disc list-inside text-xs text-gray-600 ml-4">
+                    ${service.partsUsed.map(part => `<li>${part.partName} (x${part.quantity}) - ₹${part.unitCost.toFixed(2)} each</li>`).join('')}
+                </ul>
+            `;
+        }
+
+
+        const activityItemHtml = `
+            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex items-center mb-2">
+                    <i class="ri-checkbox-circle-fill text-xl text-green-500 mr-2"></i>
+                    <p class="font-medium text-gray-800">
+                        <span class="capitalize ${serviceStatusClass}">${serviceType.replace(/-/g, ' ')}</span> for 
+                        <span class="font-semibold">${make} ${model} (${licensePlate})</span>
+                    </p>
+                </div>
+                <p class="text-sm text-gray-600 mb-1">Customer: ${customerName} (Phone: ${customerPhone})</p>
+                <p class="text-sm text-gray-600">Date: ${serviceDate}</p>
+                <p class="text-sm text-gray-600">Description: ${service.description || 'N/A'}</p>
+                <p class="text-sm text-gray-600 font-bold">Total Bill: ${totalBill}</p>
+                ${partsListHtml}
+            </div>
+        `;
+        return activityItemHtml;
+    }
+
+
+    // Function to fetch and display services for admin's "Vehicles Currently in Service"
+    async function fetchAndDisplayCurrentServices() {
+        const serviceVehiclesList = document.getElementById('service-vehicles-list');
+        serviceVehiclesList.innerHTML = ''; // Clear existing cards
+
+        const token = getToken();
+        if (!token) return;
+
+        try {
+            // Fetch services where type is NOT 'picked-up'
+            const response = await fetch(`${BASE_URL}/api/services?includePickedUp=false`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-auth-token': token
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                if (data.length > 0) {
+                    data.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date descending
+                    data.forEach(service => {
+                        serviceVehiclesList.insertAdjacentHTML('beforeend', renderCurrentServiceCard(service));
+                    });
+                }
+            } else {
+                showMessage(data.msg || 'Failed to fetch current services.', 'error');
+                if (response.status === 401 || response.status === 403) {
+                     setTimeout(() => { window.location.href = 'auth.html'; }, 1500);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching current services:', error);
+            showMessage('Network error while fetching current services.', 'error');
+        } finally {
+            updateNoServiceVehiclesMessage(); // Update message visibility
+        }
+    }
+
+    // Function to fetch and display services for admin's "Recent Activity"
+    async function fetchAndDisplayRecentActivity() {
+        const recentActivityList = document.getElementById('recent-activity-list');
+        recentActivityList.innerHTML = ''; // Clear existing items
+
+        const token = getToken();
+        if (!token) return;
+
+        try {
+            // Fetch ALL services (including picked-up ones) for recent activity
+            const response = await fetch(`${BASE_URL}/api/services?includePickedUp=true`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-auth-token': token
+                }
+            });
+
+            const data = await await response.json();
+
+            if (response.ok) {
+                if (data.length > 0) {
+                    // Sort services by date descending (most recent first)
+                    data.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    data.slice(0, 10).forEach(service => { // Displaying last 10 activities
+                        recentActivityList.insertAdjacentHTML('beforeend', renderRecentActivityItem(service));
+                    });
+                }
+            } else {
+                showMessage(data.msg || 'Failed to fetch recent activity.', 'error');
+                if (response.status === 401 || response.status === 403) {
+                     setTimeout(() => { window.location.href = 'auth.html'; }, 1500);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching recent activity:', error);
+            showMessage('Network error while fetching recent activity.', 'error');
+        } finally {
+            updateNoRecentActivityMessage(); // Update message visibility
+        }
+    }
+
+    // Function to add a part input row in the edit modal
+    function addPartInputRow(part = { partName: '', quantity: '', unitCost: '' }) { // Changed defaults to empty strings for easier clearing
+        const partsContainer = document.getElementById('parts-container');
+        const newPartEntry = document.createElement('div');
+        newPartEntry.className = 'part-entry';
+        newPartEntry.innerHTML = `
+            <input type="text" placeholder="Part Name" value="${part.partName}" class="part-name-input px-3 py-2 border border-gray-300 rounded" required>
+            <input type="number" placeholder="Qty" value="${part.quantity}" class="part-quantity-input px-3 py-2 border border-gray-300 rounded" min="1" required>
+            <input type="number" placeholder="Cost" value="${part.unitCost}" class="part-unit-cost-input px-3 py-2 border border-gray-300 rounded" step="0.01" min="0" required>
+            <button type="button" class="remove-part-btn w-full h-full flex items-center justify-center text-red-500 hover:text-red-700 transition-colors"><i class="ri-delete-bin-line"></i></button>
+        `;
+        partsContainer.appendChild(newPartEntry);
+
+        newPartEntry.querySelector('.remove-part-btn').addEventListener('click', () => {
+            partsContainer.removeChild(newPartEntry);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        // Redirect if not authenticated or not admin
+        if (!(await checkAdminAuthAndRedirect())) {
+            return; // Stop execution if not authorized
+        }
+
+        // Fetch and display services on page load for both sections
+        fetchAndDisplayCurrentServices();
+        fetchAndDisplayRecentActivity();
+
+        // Logout functionality
+        const logoutButton = document.getElementById('logout-button');
+        const logoutButtonMobile = document.getElementById('logout-button-mobile');
+
+        const performLogout = () => {
+            localStorage.removeItem('token'); // Remove JWT token
+            showMessage('Logged out successfully. Redirecting to login page.', 'success');
+            setTimeout(() => {
+                window.location.href = 'auth.html'; // Redirect to login page
+            }, 1500);
+        };
+
+        if (logoutButton) {
+            logoutButton.addEventListener('click', performLogout);
+        }
+        if (logoutButtonMobile) {
+            logoutButtonMobile.addEventListener('click', performLogout);
+        }
+
+
+        // Handle Status Update Button Click (Event Delegation)
+        const serviceVehiclesList = document.getElementById('service-vehicles-list');
+        serviceVehiclesList.addEventListener('click', async function(event) {
+            const updateButton = event.target.closest('.update-status-btn');
+            if (updateButton) {
+                const serviceCard = updateButton.closest('.service-vehicle-card');
+                const serviceId = updateButton.dataset.serviceId; // Get service ID from the button's data attribute
+                const statusSelector = serviceCard.querySelector('.status-selector');
+                const newStatus = statusSelector.value;
+                const statusSpan = serviceCard.querySelector('[data-current-status]');
+
+                const token = getToken();
+                if (!token) {
+                    showMessage('Authentication token missing. Please log in again.', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${BASE_URL}/api/services/${serviceId}/status`, {
+                        method: 'PATCH', // Use PATCH for partial update
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-auth-token': token
+                        },
+                        body: JSON.stringify({ status: newStatus })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        // Update the display immediately on success
+                        statusSpan.className = `px-3 py-1 rounded-full text-xs font-semibold uppercase status-${newStatus.toLowerCase().replace(/\s/g, '-')}`;
+                        statusSpan.textContent = newStatus;
+                        statusSpan.dataset.currentStatus = newStatus.toLowerCase().replace(/\s/g, '-');
+                        showMessage(data.msg || `Status for service ID ${serviceId} updated to "${newStatus}"!`, 'success');
+                        
+                        // If status is 'Picked Up', refresh both lists to remove from current and add to recent
+                        if (newStatus === 'Picked Up') {
+                            fetchAndDisplayCurrentServices();
+                            fetchAndDisplayRecentActivity();
+                        } else {
+                            // Otherwise, just refresh current services (and recent activity might update if order changes)
+                            fetchAndDisplayCurrentServices();
+                        }
+
+                    } else {
+                        showMessage(data.msg || 'Failed to update service status.', 'error');
+                        if (response.status === 401 || response.status === 403) {
+                             setTimeout(() => { window.location.href = 'auth.html'; }, 1500);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error updating service status:', error);
+                    showMessage('Network error while updating service status.', 'error');
+                }
+            }
+            const deleteButton = event.target.closest('.delete-service-btn');
+            if (deleteButton) {
+                const serviceId = deleteButton.dataset.serviceId;
+                showConfirmation('Delete Service', 'Are you sure you want to delete this service entry? This action cannot be undone.', async () => {
+                    const token = getToken();
+                    if (!token) {
+                        showMessage('Authentication token missing. Please log in again.', 'error');
+                        return;
+                    }
+                    try {
+                        const response = await fetch(`${BASE_URL}/api/services/${serviceId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'x-auth-token': token
+                            }
+                        });
+                        const data = await response.json();
+                        if (response.ok) {
+                            showMessage(data.msg || 'Service deleted successfully!', 'success');
+                            fetchAndDisplayCurrentServices();
+                            fetchAndDisplayRecentActivity();
+                        } else {
+                            showMessage(data.msg || 'Failed to delete service.', 'error');
+                             if (response.status === 401 || response.status === 403) {
+                                 setTimeout(() => { window.location.href = 'auth.html'; }, 1500);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error deleting service:', error);
+                        showMessage('Network error while deleting service.', 'error');
+                    }
+                });
+            }
+        });
+
+        // Handle "Edit Details" button click
+        serviceVehiclesList.addEventListener('click', async function(event) {
+            const editButton = event.target.closest('.edit-service-details-btn');
+            if (editButton) {
+                const serviceId = editButton.dataset.serviceId;
+                const token = getToken();
+                if (!token) {
+                    showMessage('Authentication token missing. Please log in again.', 'error');
+                    return;
+                }
+
+                try {
+                    // Fetch all services to find the specific one for editing
+                    // This is less efficient than fetching a single service by ID,
+                    // but the current backend structure doesn't expose a /api/services/:id GET route for admins directly,
+                    // and /api/services fetches all for admin, so we leverage that.
+                    const response = await fetch(`${BASE_URL}/api/services?includePickedUp=true`, { 
+                        method: 'GET',
+                        headers: {
+                            'x-auth-token': token
+                        }
+                    });
+                    const allServices = await response.json();
+                    const serviceToEdit = allServices.find(s => s._id === serviceId);
+
+                    if (!serviceToEdit) {
+                        showMessage('Service not found for editing.', 'error');
+                        return;
+                    }
+
+                    // Populate the modal fields
+                    document.getElementById('edit-service-id').value = serviceToEdit._id;
+                    // Format date toYYYY-MM-DD for input type="date"
+                    document.getElementById('edit-service-date').value = serviceToEdit.date ? new Date(serviceToEdit.date).toISOString().split('T')[0] : '';
+                    document.getElementById('edit-service-type').value = serviceToEdit.type;
+                    document.getElementById('edit-customer-name').value = serviceToEdit.customerName || ''; // Populate customer name
+                    document.getElementById('edit-customer-phone').value = serviceToEdit.customerPhone || ''; // Populate customer phone
+                    document.getElementById('edit-service-description').value = serviceToEdit.description || '';
+                    document.getElementById('edit-service-cost').value = serviceToEdit.cost !== undefined ? serviceToEdit.cost : '';
+                    document.getElementById('edit-total-bill').value = serviceToEdit.totalBill !== undefined ? serviceToEdit.totalBill : '';
+
+                    // Clear existing parts and add them from the service object
+                    const partsContainer = document.getElementById('parts-container');
+                    partsContainer.innerHTML = ''; // Clear existing
+                    if (serviceToEdit.partsUsed && serviceToEdit.partsUsed.length > 0) {
+                        serviceToEdit.partsUsed.forEach(part => addPartInputRow(part));
+                    } else {
+                        addPartInputRow(); // Add one empty row if no parts
+                    }
+                    
+                    // Show the modal
+                    document.getElementById('edit-service-modal').classList.add('show');
+
+                } catch (error) {
+                    console.error('Error fetching service for edit:', error);
+                    showMessage('Network error while fetching service for edit.', 'error');
+                }
+            }
+        });
+
+        // Handle "Add Part" button in the edit modal
+        document.getElementById('add-part-btn').addEventListener('click', () => {
+            addPartInputRow();
+        });
+
+        // Handle "Cancel" button in the edit modal
+        document.getElementById('cancel-edit-btn').addEventListener('click', () => {
+            document.getElementById('edit-service-modal').classList.remove('show');
+        });
+
+        // Handle "Save Changes" on Edit Service Form Submission
+        document.getElementById('edit-service-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const serviceId = document.getElementById('edit-service-id').value;
+            const date = document.getElementById('edit-service-date').value;
+            const type = document.getElementById('edit-service-type').value;
+            const customerName = document.getElementById('edit-customer-name').value.trim(); // Get customer name
+            const customerPhone = document.getElementById('edit-customer-phone').value.trim(); // Get customer phone
+            const description = document.getElementById('edit-service-description').value.trim();
+            const cost = parseFloat(document.getElementById('edit-service-cost').value.trim());
+            const totalBill = parseFloat(document.getElementById('edit-total-bill').value.trim());
+
+            const parts = [];
+            const partEntries = document.querySelectorAll('#parts-container .part-entry');
+            let isValidParts = true;
+            partEntries.forEach(entry => {
+                const partNameInput = entry.querySelector('.part-name-input');
+                const quantityInput = entry.querySelector('.part-quantity-input');
+                const unitCostInput = entry.querySelector('.part-unit-cost-input');
+
+                const partName = partNameInput.value.trim();
+                const quantity = parseInt(quantityInput.value.trim());
+                const unitCost = parseFloat(unitCostInput.value.trim());
+
+                // Only include parts where ALL fields are valid and filled
+                if (partName && !isNaN(quantity) && quantity > 0 && !isNaN(unitCost) && unitCost >= 0) {
+                    parts.push({ partName, quantity, unitCost });
+                } else if (partName || quantityInput.value.trim() !== '' || unitCostInput.value.trim() !== '') {
+                    // If any part of the row has content but is not fully valid, mark as invalid
+                    isValidParts = false;
+                }
+            });
+
+            if (!isValidParts) {
+                showMessage('Please ensure all part entries have valid Name, Quantity (>0), and Cost (>=0). Incomplete part rows will be ignored.', 'error');
+                return;
+            }
+
+            const token = getToken();
+            if (!token) {
+                showMessage('Authentication token missing. Please log in again.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/services/${serviceId}`, {
+                    method: 'PUT', // Using PUT for comprehensive update
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-auth-token': token
+                    },
+                    body: JSON.stringify({
+                        date,
+                        type,
+                        customerName, // Send customer name
+                        customerPhone, // Send customer phone
+                        description,
+                        cost,
+                        partsUsed: parts, // Send the collected parts array
+                        totalBill
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage(data.msg || 'Service details updated successfully!', 'success');
+                    document.getElementById('edit-service-modal').classList.remove('show'); // Hide modal
+                    fetchAndDisplayCurrentServices(); // Refresh current services
+                    fetchAndDisplayRecentActivity(); // Refresh recent activity
+                } else {
+                    showMessage(data.msg || 'Failed to update service details.', 'error');
+                    console.error('Backend error data:', data); // Log the full error from backend
+                    if (response.status === 401 || response.status === 403) {
+                         setTimeout(() => { window.location.href = 'auth.html'; }, 1500);
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating service details:', error);
+                showMessage('Network error while updating service details.', 'error');
+            }
+        });
+
+        // Confirmation Modal Logic (duplicated in dashboard.html, but kept for self-containment)
+        const confirmationModal = document.getElementById('confirmation-modal');
+        const confirmYesBtn = document.getElementById('confirm-yes');
+        const confirmNoBtn = document.getElementById('confirm-no');
+        let currentConfirmAction = null;
+
+        function showConfirmation(title, message, onConfirm) {
+            document.getElementById('confirmation-modal-title').textContent = title;
+            document.getElementById('confirmation-modal-message').textContent = message;
+            confirmationModal.classList.add('show');
+            currentConfirmAction = onConfirm;
+        }
+
+        confirmYesBtn.addEventListener('click', () => {
+            if (currentConfirmAction) {
+                currentConfirmAction();
+            }
+            confirmationModal.classList.remove('show');
+        });
+
+        confirmNoBtn.addEventListener('click', () => {
+            confirmationModal.classList.remove('show');
+            currentConfirmAction = null;
+        });
+    });
+</script>
+
+<!-- Navbar Scroll Effect Script -->
+<script id="navbar-scroll-script">
+document.addEventListener('DOMContentLoaded', function() {
+    const navbar = document.getElementById('navbar');
+    function handleScroll() {
+        if (window.scrollY > 50) {
+            navbar.classList.add('py-2');
+            navbar.classList.add('shadow-lg');
+        } else {
+            navbar.classList.remove('py-2');
+            navbar.classList.remove('shadow-lg');
+        }
+    }
+    window.addEventListener('scroll', handleScroll);
+});
+</script>
+
+<!-- Smooth Scroll Script -->
+<script id="smooth-scroll-script">
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                window.scrollTo({
+                    top: targetElement.offsetTop - 80, /* Adjust for fixed header height */
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+});
+</script>
+</body>
+</html>
